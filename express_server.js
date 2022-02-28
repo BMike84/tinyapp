@@ -8,7 +8,11 @@ const urlDataBase = {
 };
 
 app.get('/', (req, res) => {
-  res,send('Hello!');
+  res.send('Hello!');
+});
+
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);
 });
 
 app.listen(PORT, () => {
