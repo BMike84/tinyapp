@@ -8,7 +8,12 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 
 function generateRandomString() {
-
+  const numsLetters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += numsLetters.charAt(Math.floor(Math.random() * numsLetters.length));
+  }
+  return result;
 }
 
 const urlDataBase = {
