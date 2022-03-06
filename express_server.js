@@ -8,8 +8,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 //use cookie-parser
 const cookieParser = require("cookie-parser");
-// const { emit } = require("nodemon");
-// const { use } = require("express/lib/application");
+const { emit } = require("nodemon");
+const { use } = require("express/lib/application");
 app.use(cookieParser());
 
 // use ejs
