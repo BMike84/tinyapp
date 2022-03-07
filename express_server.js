@@ -29,16 +29,6 @@ const generateRandomString = () => {
   return result;
 };
 
-//find user in database
-const userExist = (id, userDatabase) => {
-  for (const user in userDatabase) {
-    if (userDatabase[user].id === id) {
-      const userId = userDatabase[user].id;
-      return userId;
-    }
-  }
-}
-
 //find email in database
 const emailExist = (email, userDatabase) => {
   for (const user in userDatabase) {
@@ -118,16 +108,16 @@ app.post("/urls/:id", (req, res) => {
 
 //create register page
 app.get("/register", (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]] }
+  const templateVars = { user: users[req.cookies["user_id"]] };
   res.render('urls_registration', templateVars);
 });
 
-// generate a user 
+// generate a user
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
-  if(!email || !password) {
+  if (!email || !password) {
     res.status(400).send("Status Code 400: Please add a email and password!");
   } else if (emailExist(email, users)) {
     res.status(400).send("Status Code 400: Account already exist please login!");
@@ -146,19 +136,17 @@ app.post("/register", (req, res) => {
 
 //creates login page
 app.get("/login", (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]] }
+  const templateVars = { user: users[req.cookies["user_id"]] };
   res.render('urls_login', templateVars);
 });
 
 // logins to exist users
 app.post("/login", (req, res) => {
   const email = req.body.email;
-  const password = req.body.password; 
+  const validUser = emailExist(email, users);
+  const password = req.body.password;
   const validPassword = passwordExist(password, users);
 
-
-  const validUser = emailExist(email, users);
-  
   if (!validUser) {
     res.status(403).send("Status Code 403: Email doesn't exist!");
   }
@@ -167,7 +155,7 @@ app.post("/login", (req, res) => {
     if (validUser && validPassword) {
       res.cookie("user_id", users[user].id);
     } else {
-      res.status(403).send("Status Code 403: Password doesn't match!")
+      res.status(403).send("Status Code 403: Password doesn't match!");
     }
   }
   res.redirect("/urls");
