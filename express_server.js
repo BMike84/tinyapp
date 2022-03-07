@@ -29,15 +29,35 @@ const generateRandomString = () => {
   return result;
 };
 
+//find user in database
+const userExist = (id, userDatabase) => {
+  for (const user in userDatabase) {
+    if (userDatabase[user].id === id) {
+      const userId = userDatabase[user].id;
+      return userId;
+    }
+  }
+}
+
+//find email in database
 const emailExist = (email, userDatabase) => {
   for (const user in userDatabase) {
-    if ( userDatabase[user].email === email) {
+    if (userDatabase[user].email === email) {
       return true;
     }
   }
   return false;
 };
 
+//find password in database
+const passwordExist = (password, userDatabase) => {
+  for (const user in userDatabase) {
+    if (userDatabase[user].password === password) {
+      return true;
+    }
+  }
+  return false;
+};
 
 
 app.get("/", (req, res) => {
@@ -110,7 +130,7 @@ app.post("/register", (req, res) => {
   if(!email || !password) {
     res.status(400).send("Status Code 400: Please add a email and password!");
   } else if (emailExist(email, users)) {
-    res.status(400).send("Status Code 400: Please login account already exist!");
+    res.status(400).send("Status Code 400: Account already exist please login!");
   } else {
     const user_id = generateRandomString();
     users[user_id] = {
@@ -130,18 +150,24 @@ app.get("/login", (req, res) => {
   res.render('urls_login', templateVars);
 });
 
-// creates the login from form and creates a cookie
+// logins to exist users
 app.post("/login", (req, res) => {
   const email = req.body.email;
-  const user = emailExist(email, users);
-  if (!user) {
-    res.status(400).send("Status Code 400: Email doesn't exist");
-  } else {
-    for (let user in users) {
-      if (email === users[user].email) {
-        res.cookie("user_id", users[user].id);
-        break;
-      }
+  const password = req.body.password; 
+  const validPassword = passwordExist(password, users);
+
+
+  const validUser = emailExist(email, users);
+  
+  if (!validUser) {
+    res.status(403).send("Status Code 403: Email doesn't exist!");
+  }
+  
+  for (let user in users) {
+    if (validUser && validPassword) {
+      res.cookie("user_id", users[user].id);
+    } else {
+      res.status(403).send("Status Code 403: Password doesn't match!")
     }
   }
   res.redirect("/urls");
