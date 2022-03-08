@@ -48,11 +48,9 @@ const generateRandomString = () => {
 const emailExist = (email, userDatabase) => {
   for (const user in userDatabase) {
     if (userDatabase[user].email === email) {
-      // return true;
       return userDatabase[user].email;
     }
   }
-  // return false;
   return undefined;
 };
 
@@ -60,17 +58,14 @@ const emailExist = (email, userDatabase) => {
 const passwordExist = (email, userDatabase) => {
   for (const user in userDatabase) {
     if (userDatabase[user].email === email) {
-      // return true;
       return userDatabase[user].password;
     }
-  }
-  // return false;
   return undefined;
 };
 
 // find the id by email
 const idExist = (email, userDatabase) => {
-  for (const user in userDatabase) {
+  for (let user in userDatabase) {
     if (email === userDatabase[user].email) {
       return userDatabase[user].id;
     }
@@ -108,13 +103,6 @@ app.get("/urls", (req, res) => {
 
 //creates a new http address
 app.post("/urls", (req, res) => {
-  // const shortURL = generateRandomString();
-  // const user = users[req.cookies["user_id"]];
-  // urlDatabase[shortURL] = {
-  //   longURL: req.body.longURL,
-  //   userID: user
-  // }
-  // res.redirect(`urls/${shortURL}`);
   const longURL = req.body.longURL;
   const userID = req.cookies.user_id;
   const shortURL = generateRandomString();
@@ -194,14 +182,14 @@ app.post("/register", (req, res) => {
   } else if (emailExist(email, users)) {
     res.status(400).send("Status Code 400: Account already exist please login!");
   } else {
-    const userID = generateRandomString();
-    users[userID] = {
-      id: userID,
+    const user_id = generateRandomString();
+    users[user_id] = {
+      id: user_id,
       email: req.body.email,
       password: req.body.password
     };
     //generate a cookie for the user
-    res.cookie('user_id', userID);
+    res.cookie('user_id', user_id);
     res.redirect("/urls");
   }
 });
