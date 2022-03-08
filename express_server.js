@@ -16,8 +16,23 @@ app.set("view engine", "ejs");
 const PORT = 8080;
 
 // variables
-const urlDatabase = {};
-const users = {};
+const urlDatabase = {
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW"
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW"
+  },
+};
+const users = {
+  "aJ48lW": {
+    id: "aJ48lW",
+    email: "b@b.com",
+    password: 'mike'
+  },
+};
 
 // function to make unique short url
 const generateRandomString = () => {
@@ -33,25 +48,50 @@ const generateRandomString = () => {
 const emailExist = (email, userDatabase) => {
   for (const user in userDatabase) {
     if (userDatabase[user].email === email) {
-      return true;
+      // return true;
+      return userDatabase[user].email;
     }
   }
-  return false;
+  // return false;
+  return undefined;
 };
 
 //find password in database
-const passwordExist = (password, userDatabase) => {
+const passwordExist = (email, userDatabase) => {
   for (const user in userDatabase) {
-    if (userDatabase[user].password === password) {
-      return true;
+    if (userDatabase[user].email === email) {
+      // return true;
+      return userDatabase[user].password;
     }
   }
-  return false;
+  // return false;
+  return undefined;
+};
+
+// find the id by email
+const idExist = (email, userDatabase) => {
+  for (let user in userDatabase) {
+    if (email === userDatabase[user].email) {
+      return userDatabase[user].id;
+    }
+  }
+  return undefined;
+};
+
+// Returns an object of short URLs specific to the passed in userID
+const userUrls = function(id, urlDatabase) {
+  const userUrls = urlDatabase;
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      userUrls[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return userUrls;
 };
 
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/urls");
 });
 
 // turn url to json format
@@ -61,49 +101,81 @@ app.get("/urls.json", (req, res) => {
 
 // main url page
 app.get("/urls", (req, res) => {
-  const user = users[req.cookies["user_id"]];
-  const templateVars = { urls: urlDatabase, user: user };
+  const user = users[req.cookies.user_id];
+  const templateVars = { urls: userUrls(req.cookies.userID, urlDatabase), user: user };
   res.render("urls_index", templateVars);
 });
 
 //creates a new http address
 app.post("/urls", (req, res) => {
-  // creates the short url random string
-  let shortURL = generateRandomString();
-  // adds in the written http addresss for longurl
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect(`urls/${shortURL}`);
+  // const shortURL = generateRandomString();
+  // const user = users[req.cookies["user_id"]];
+  // urlDatabase[shortURL] = {
+  //   longURL: req.body.longURL,
+  //   userID: user
+  // }
+  // res.redirect(`urls/${shortURL}`);
+  const longURL = req.body.longURL;
+  const userID = req.cookies.user_id;
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = { longURL, userID };
+  res.redirect(`/urls/${shortURL}`);
 });
 
+//edit and show tinyurl
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
 // goes to create new url tab
 app.get("/urls/new", (req, res) => {
-  const templateVars = { user: req.cookies.user_id };
-  res.render("urls_new", templateVars);
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { user };
+  if (user) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.render("urls_login", templateVars);
+  }
 });
 
 // generates the new url added
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: req.cookies.user_id };
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user };
   res.render("urls_show", templateVars);
 });
+  
 
 // uses button to delete existing url
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
-  res.redirect("/urls");
+  const user = users[req.cookies.user_id];
+
+  if (!user) {
+    res.redirect("/login");
+  }
+  
+  if (urlDatabase[req.params.shortURL].userID === req.cookies.user_id) {
+    delete urlDatabase[req.params.shortURL];
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("Status Code 403: Urls belong to different user!");
+  }
 });
 
-
 app.post("/urls/:id", (req, res) => {
-  const shortURL = req.params.id;
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect("/urls");
+  const user = users[req.cookies["user_id"]];
+  if (!user) {
+    res.redirect("/login");
+  }
+
+  if (urlDatabase[req.params.id].userID === req.cookies.user_id) {
+    const longURL = req.body.longURL;
+    urlDatabase[req.params.id].longURL = longURL;
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("Status Code 403: Urls belong to different user!");
+  }
 });
 
 //create register page
@@ -136,29 +208,28 @@ app.post("/register", (req, res) => {
 
 //creates login page
 app.get("/login", (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]] };
+  const templateVars = { user: users[req.cookies.user_id] };
   res.render('urls_login', templateVars);
 });
 
-// logins to exist users
 app.post("/login", (req, res) => {
   const email = req.body.email;
-  const validUser = emailExist(email, users);
   const password = req.body.password;
-  const validPassword = passwordExist(password, users);
-
-  if (!validUser) {
-    res.status(403).send("Status Code 403: Email doesn't exist!");
-  }
-  
-  for (let user in users) {
-    if (validUser && validPassword) {
-      res.cookie("user_id", users[user].id);
+  const userEmail = emailExist(email, users);
+  const userPassword = passwordExist(email, users);
+  if (email === userEmail) {
+    if (password === userPassword) {
+      const userID = idExist(email, users);
+      // set cookie with user id
+      res.cookie("user_id", userID);
+      res.redirect("/urls");
     } else {
       res.status(403).send("Status Code 403: Password doesn't match!");
     }
+  } else {
+    res.status(403).send("Status Code 403: Email doesn't exist!");
   }
-  res.redirect("/urls");
+  
 });
 
 // lets you log out and deletes existing cookies
