@@ -48,11 +48,9 @@ const generateRandomString = () => {
 const emailExist = (email, userDatabase) => {
   for (const user in userDatabase) {
     if (userDatabase[user].email === email) {
-      // return true;
       return userDatabase[user].email;
     }
   }
-  // return false;
   return undefined;
 };
 
@@ -60,11 +58,9 @@ const emailExist = (email, userDatabase) => {
 const passwordExist = (email, userDatabase) => {
   for (const user in userDatabase) {
     if (userDatabase[user].email === email) {
-      // return true;
       return userDatabase[user].password;
     }
   }
-  // return false;
   return undefined;
 };
 
@@ -108,13 +104,6 @@ app.get("/urls", (req, res) => {
 
 //creates a new http address
 app.post("/urls", (req, res) => {
-  // const shortURL = generateRandomString();
-  // const user = users[req.cookies["user_id"]];
-  // urlDatabase[shortURL] = {
-  //   longURL: req.body.longURL,
-  //   userID: user
-  // }
-  // res.redirect(`urls/${shortURL}`);
   const longURL = req.body.longURL;
   const userID = req.cookies.user_id;
   const shortURL = generateRandomString();
