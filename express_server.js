@@ -194,14 +194,14 @@ app.post("/register", (req, res) => {
   } else if (emailExist(email, users)) {
     res.status(400).send("Status Code 400: Account already exist please login!");
   } else {
-    const user_id = generateRandomString();
-    users[user_id] = {
-      id: user_id,
+    const userID = generateRandomString();
+    users[userID] = {
+      id: userID,
       email: req.body.email,
       password: req.body.password
     };
     //generate a cookie for the user
-    res.cookie('user_id', user_id);
+    res.cookie('user_id', userID);
     res.redirect("/urls");
   }
 });
