@@ -75,7 +75,7 @@ const idExist = (email, userDatabase) => {
 };
 
 // Returns an object of short URLs specific to the passed in userID
-const userUrls = function(id, urlDatabase) {
+const urlsUsers = function(id, urlDatabase) {
   const userUrls = urlDatabase;
   for (const shortURL in urlDatabase) {
     if (urlDatabase[shortURL].userID === id) {
@@ -98,7 +98,7 @@ app.get("/urls.json", (req, res) => {
 // main url page
 app.get("/urls", (req, res) => {
   const user = users[req.cookies.user_id];
-  const templateVars = { urls: userUrls(req.cookies.userID, urlDatabase), user: user };
+  const templateVars = { urls: urlsUsers(req.cookies.userID, urlDatabase), user: user };
   res.render("urls_index", templateVars);
 });
 
@@ -139,31 +139,27 @@ app.get("/urls/:shortURL", (req, res) => {
 // uses button to delete existing url
 app.post("/urls/:shortURL/delete", (req, res) => {
   const user = users[req.cookies.user_id];
-
-  if (!user) {
-    res.redirect("/login");
-  }
   
   if (urlDatabase[req.params.shortURL].userID === req.cookies.user_id) {
     delete urlDatabase[req.params.shortURL];
     res.redirect("/urls");
   } else {
-    res.status(403).send("Status Code 403: Urls belong to different user!");
+    const errorMessage = "Cannot delete URLs they belong to a different user!"
+    // res.status(403).send("Status Code 403: Urls belong to different user!");
+    res.status(403).render('urls_errors', {user: user, errorMessage});
   }
 });
 
 app.post("/urls/:id", (req, res) => {
   const user = users[req.cookies["user_id"]];
-  if (!user) {
-    res.redirect("/login");
-  }
-
   if (urlDatabase[req.params.id].userID === req.cookies.user_id) {
     const longURL = req.body.longURL;
     urlDatabase[req.params.id].longURL = longURL;
     res.redirect("/urls");
   } else {
-    res.status(403).send("Status Code 403: Urls belong to different user!");
+    // res.status(403).send("Status Code 403: Urls belong to different user!");
+    const errorMessage = "Cannot edit URLs they belong to a different user!"
+    res.status(403).render('urls_errors', {user: user, errorMessage});
   }
 });
 
@@ -179,9 +175,13 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
 
   if (!email || !password) {
-    res.status(400).send("Status Code 400: Please add a email and password!");
+    const errorMessage = "Please add a email and password!"
+    res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
+    // res.status(400).send("Status Code 400: Please add a email and password!");
   } else if (emailExist(email, users)) {
-    res.status(400).send("Status Code 400: Account already exist please login!");
+    const errorMessage = "Account already exist please login!"
+    res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
+    // res.status(400).send("Status Code 400: Account already exist please login!");
   } else {
     const user_id = generateRandomString();
     users[user_id] = {
