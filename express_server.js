@@ -79,6 +79,8 @@ app.get("/urls.json", (req, res) => {
 // main url page
 app.get("/urls", (req, res) => {
   const user = users[req.cookies.user_id];
+  // test for users to see everything and see if items can delete or edit without permission
+  //  const templateVars = { urls: urlDatabase, user: user };
   const templateVars = { urls: urlsForUser(req.cookies.user_id, urlDatabase), user: user };
   res.render("urls_index", templateVars);
 });
