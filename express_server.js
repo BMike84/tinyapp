@@ -123,6 +123,8 @@ app.get("/urls/:shortURL", (req, res) => {
 // uses button to delete existing url
 app.post("/urls/:shortURL/delete", (req, res) => {
   const user = users[req.cookies.user_id];
+  console.log('userID',req.cookies.user_id)
+  console.log('userID BY url',urlDatabase[req.params.shortURL].userID)
   
   if (urlDatabase[req.params.shortURL].userID === req.cookies.user_id) {
     delete urlDatabase[req.params.shortURL];
