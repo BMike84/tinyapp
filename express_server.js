@@ -10,6 +10,9 @@ app.use(bodyParser.urlencoded({extended: true}));
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
+//use bcryptjs
+const bcrypt = require("bcryptjs");
+
 // use ejs
 app.set("view engine", "ejs");
 
@@ -30,7 +33,7 @@ const users = {
   "aJ48lW": {
     id: "aJ48lW",
     email: "b@b.com",
-    password: 'mike'
+    password: bcrypt.hashSync('mike', 10)
   },
 };
 
@@ -123,8 +126,6 @@ app.get("/urls/:shortURL", (req, res) => {
 // uses button to delete existing url
 app.post("/urls/:shortURL/delete", (req, res) => {
   const user = users[req.cookies.user_id];
-  console.log('userID',req.cookies.user_id)
-  console.log('userID BY url',urlDatabase[req.params.shortURL].userID)
   
   if (urlDatabase[req.params.shortURL].userID === req.cookies.user_id) {
     delete urlDatabase[req.params.shortURL];
@@ -157,27 +158,29 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const user = findUserByemail(email);
 
-  if (!email || ! password) {
+  if (!email || !password) {
     const errorMessage = "Please add a email and password!"
     res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
   }
-  const user = findUserByemail(email);
-
-  if (user) {
-    const errorMessage = "Account already exist please login!"
-    res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
-  }
- 
-  const user_id = generateRandomString();
+  
+  // no user and email and password are present then create new user
+  if (!user && (email && password)) {
+    const user_id = generateRandomString();
     users[user_id] = {
       id: user_id,
       email: req.body.email,
-      password: req.body.password
+      // password: req.body.password
+      password: bcrypt.hashSync(password, 10)
     };
     //generate a cookie for the user
     res.cookie('user_id', user_id);
     res.redirect("/urls");
+  } else {
+    const errorMessage = "Account Exist! Please Login instead"
+    res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
+  }
 });
 
 //creates login page
@@ -189,6 +192,7 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email.trim();
   const password = req.body.password.trim();
+  console.log(password)
 
   if (!email || !password) {
     const errorMessage = "Invalid Credentials! Missing email or password! Try to Register!"
@@ -201,14 +205,17 @@ app.post("/login", (req, res) => {
   const errorMessage = "Invalid credentials! User does not exist";
   res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
   }
-  
-  if (user.password !== password) {
-  const errorMessage = "Invalid credentials! Invalid password";
-  res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
+  // if (user.password !== password) {
+    if (user && bcrypt.compareSync(password, user.password)) {
+      res.cookie("user_id", user.id);
+      res.redirect("/urls");
+  } else {
+    const errorMessage = "Invalid credentials! Invalid password";
+    console.log(user.password)
+    res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
   }
-
-  res.cookie("user_id", user.id);
-  res.redirect("/urls");
+  
+ 
 });
 
 // lets you log out and deletes existing cookies
