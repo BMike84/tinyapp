@@ -6,9 +6,20 @@ const app = express();
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
-//use cookie-parser
+// use cookie-parser
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
+
+//user cookie-session
+// const cookieSession = require("cookie-session");
+// app.use(cookieSession({
+//   name: 'session',
+//   // change keys not sure yet
+//   keys: ['MICHAEL'],
+
+//   // Cookie Options
+//   maxAge: 24 * 60 * 60 * 1000 // 24 hours
+// }));
 
 //use bcryptjs
 const bcrypt = require("bcryptjs");
@@ -86,16 +97,24 @@ app.get("/urls", (req, res) => {
   //  const templateVars = { urls: urlDatabase, user: user };
   const templateVars = { urls: urlsForUser(req.cookies.user_id, urlDatabase), user: user };
   res.render("urls_index", templateVars);
+  console.log(users)
 });
 
 
 //creates a new http address
 app.post("/urls", (req, res) => {
-  const longURL = req.body.longURL;
-  const userID = req.cookies.user_id;
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = { longURL, userID };
-  res.redirect(`/urls/${shortURL}`);
+  const user = users[req.cookies.user_id];
+  if (user) {
+    const longURL = req.body.longURL;
+    const userID = req.cookies.user_id;
+    const shortURL = generateRandomString();
+    urlDatabase[shortURL] = { longURL, userID };
+    res.redirect(`/urls/${shortURL}`);
+  } else {
+    const errorMessage = "You must be logged in to do that!"
+    res.status(403).render('urls_errors', {user: user, errorMessage}); 
+  }
+  
 });
 
 //edit and show tinyurl
@@ -189,9 +208,11 @@ app.get("/login", (req, res) => {
   res.render('urls_login', templateVars);
 });
 
+//i can see my password in the console when i type it here but in the users its not present
+// logins to page
 app.post("/login", (req, res) => {
   const email = req.body.email.trim();
-  const password = req.body.password.trim();
+  const password =  req.body.password.trim();
   console.log(password)
 
   if (!email || !password) {
