@@ -44,6 +44,7 @@ const generateRandomString = () => {
   return result;
 };
 
+<<<<<<< HEAD
 //find email in database
 const emailExist = (email, userDatabase) => {
   for (const user in userDatabase) {
@@ -73,10 +74,22 @@ const idExist = (email, userDatabase) => {
   }
   return undefined;
 };
+=======
+//test function after lecture
+const findUserByemail = (email) => {
+  for (const userID in users) {
+    const user = users[userID];
+    if (user.email === email) {
+      return user;
+    }
+  }
+  return null;
+}
+>>>>>>> feature/testRefactor
 
 // Returns an object of short URLs specific to the passed in userID
-const userUrls = function(id, urlDatabase) {
-  const userUrls = urlDatabase;
+const urlsForUser = function(id, urlDatabase) {
+  const userUrls = {};
   for (const shortURL in urlDatabase) {
     if (urlDatabase[shortURL].userID === id) {
       userUrls[shortURL] = urlDatabase[shortURL];
@@ -98,7 +111,9 @@ app.get("/urls.json", (req, res) => {
 // main url page
 app.get("/urls", (req, res) => {
   const user = users[req.cookies.user_id];
-  const templateVars = { urls: userUrls(req.cookies.userID, urlDatabase), user: user };
+  // test for users to see everything and see if items can delete or edit without permission
+  //  const templateVars = { urls: urlDatabase, user: user };
+  const templateVars = { urls: urlsForUser(req.cookies.user_id, urlDatabase), user: user };
   res.render("urls_index", templateVars);
 });
 
@@ -119,7 +134,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 // goes to create new url tab
 app.get("/urls/new", (req, res) => {
-  const user = users[req.cookies["user_id"]];
+  const user = users[req.cookies.user_id];
   const templateVars = { user };
   if (user) {
     res.render("urls_new", templateVars);
@@ -130,7 +145,7 @@ app.get("/urls/new", (req, res) => {
 
 // generates the new url added
 app.get("/urls/:shortURL", (req, res) => {
-  const user = users[req.cookies["user_id"]];
+  const user = users[req.cookies.user_id];
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user };
   res.render("urls_show", templateVars);
 });
@@ -139,37 +154,31 @@ app.get("/urls/:shortURL", (req, res) => {
 // uses button to delete existing url
 app.post("/urls/:shortURL/delete", (req, res) => {
   const user = users[req.cookies.user_id];
-
-  if (!user) {
-    res.redirect("/login");
-  }
   
   if (urlDatabase[req.params.shortURL].userID === req.cookies.user_id) {
     delete urlDatabase[req.params.shortURL];
     res.redirect("/urls");
   } else {
-    res.status(403).send("Status Code 403: Urls belong to different user!");
+    const errorMessage = "Cannot delete URLs they belong to a different user!"
+    res.status(403).render('urls_errors', {user: user, errorMessage});
   }
 });
 
 app.post("/urls/:id", (req, res) => {
-  const user = users[req.cookies["user_id"]];
-  if (!user) {
-    res.redirect("/login");
-  }
-
+  const user = users[req.cookies.user_id];
   if (urlDatabase[req.params.id].userID === req.cookies.user_id) {
     const longURL = req.body.longURL;
     urlDatabase[req.params.id].longURL = longURL;
     res.redirect("/urls");
   } else {
-    res.status(403).send("Status Code 403: Urls belong to different user!");
+    const errorMessage = "Cannot edit URLs they belong to a different user!"
+    res.status(403).render('urls_errors', {user: user, errorMessage});
   }
 });
 
 //create register page
 app.get("/register", (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]] };
+  const templateVars = { user: users[req.cookies.user_id] };
   res.render('urls_registration', templateVars);
 });
 
@@ -178,12 +187,18 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
-  if (!email || !password) {
-    res.status(400).send("Status Code 400: Please add a email and password!");
-  } else if (emailExist(email, users)) {
-    res.status(400).send("Status Code 400: Account already exist please login!");
-  } else {
-    const user_id = generateRandomString();
+  if (!email || ! password) {
+    const errorMessage = "Please add a email and password!"
+    res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
+  }
+  const user = findUserByemail(email);
+
+  if (user) {
+    const errorMessage = "Account already exist please login!"
+    res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
+  }
+ 
+  const user_id = generateRandomString();
     users[user_id] = {
       id: user_id,
       email: req.body.email,
@@ -192,7 +207,6 @@ app.post("/register", (req, res) => {
     //generate a cookie for the user
     res.cookie('user_id', user_id);
     res.redirect("/urls");
-  }
 });
 
 //creates login page
@@ -202,22 +216,29 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-  const userEmail = emailExist(email, users);
-  const userPassword = passwordExist(email, users);
-  if (email === userEmail) {
-    if (password === userPassword) {
-      const userID = idExist(email, users);
-      // set cookie with user id
-      res.cookie("user_id", userID);
-      res.redirect("/urls");
-    } else {
-      res.status(403).send("Status Code 403: Password doesn't match!");
-    }
-  } else {
-    res.status(403).send("Status Code 403: Email doesn't exist!");
+  const email = req.body.email.trim();
+  const password = req.body.password.trim();
+  // console.log(email, password)
+
+  if (!email || !password) {
+    const errorMessage = "Invalid Credentials! Missing email or password! Try to Register!"
+    res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
   }
+
+  const user = findUserByemail(email);
+  // console.log("user:", user)
+
+  if (!user) {
+  const errorMessage = "Invalid credentials! User does not exist";
+  res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
+  }
+  
+  if (user.password !== password) {
+  const errorMessage = "Invalid credentials! Invalid password";
+  res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
+  }
+  res.cookie("user_id", user.id);
+  res.redirect("/urls");
   
 });
 
