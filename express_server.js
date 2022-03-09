@@ -44,37 +44,6 @@ const generateRandomString = () => {
   return result;
 };
 
-<<<<<<< HEAD
-//find email in database
-const emailExist = (email, userDatabase) => {
-  for (const user in userDatabase) {
-    if (userDatabase[user].email === email) {
-      return userDatabase[user].email;
-    }
-  }
-  return undefined;
-};
-
-//find password in database
-const passwordExist = (email, userDatabase) => {
-  for (const user in userDatabase) {
-    if (userDatabase[user].email === email) {
-      return userDatabase[user].password;
-    }
-  }
-  return undefined;
-};
-
-// find the id by email
-const idExist = (email, userDatabase) => {
-  for (const user in userDatabase) {
-    if (email === userDatabase[user].email) {
-      return userDatabase[user].id;
-    }
-  }
-  return undefined;
-};
-=======
 //test function after lecture
 const findUserByemail = (email) => {
   for (const userID in users) {
@@ -85,7 +54,6 @@ const findUserByemail = (email) => {
   }
   return null;
 }
->>>>>>> feature/testRefactor
 
 // Returns an object of short URLs specific to the passed in userID
 const urlsForUser = function(id, urlDatabase) {
@@ -116,6 +84,7 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlsForUser(req.cookies.user_id, urlDatabase), user: user };
   res.render("urls_index", templateVars);
 });
+
 
 //creates a new http address
 app.post("/urls", (req, res) => {
@@ -218,7 +187,6 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email.trim();
   const password = req.body.password.trim();
-  // console.log(email, password)
 
   if (!email || !password) {
     const errorMessage = "Invalid Credentials! Missing email or password! Try to Register!"
@@ -226,7 +194,6 @@ app.post("/login", (req, res) => {
   }
 
   const user = findUserByemail(email);
-  // console.log("user:", user)
 
   if (!user) {
   const errorMessage = "Invalid credentials! User does not exist";
@@ -237,9 +204,9 @@ app.post("/login", (req, res) => {
   const errorMessage = "Invalid credentials! Invalid password";
   res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
   }
+
   res.cookie("user_id", user.id);
   res.redirect("/urls");
-  
 });
 
 // lets you log out and deletes existing cookies
