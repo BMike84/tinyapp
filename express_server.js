@@ -75,7 +75,7 @@ const idExist = (email, userDatabase) => {
 };
 
 // Returns an object of short URLs specific to the passed in userID
-const urlsUsers = function(id, urlDatabase) {
+const urlsForUser = function(id, urlDatabase) {
   const userUrls = urlDatabase;
   for (const shortURL in urlDatabase) {
     if (urlDatabase[shortURL].userID === id) {
@@ -98,7 +98,7 @@ app.get("/urls.json", (req, res) => {
 // main url page
 app.get("/urls", (req, res) => {
   const user = users[req.cookies.user_id];
-  const templateVars = { urls: urlsUsers(req.cookies.userID, urlDatabase), user: user };
+  const templateVars = { urls: urlsForUser(req.cookies.userID, urlDatabase), user: user };
   res.render("urls_index", templateVars);
 });
 
@@ -145,7 +145,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     res.redirect("/urls");
   } else {
     const errorMessage = "Cannot delete URLs they belong to a different user!"
-    // res.status(403).send("Status Code 403: Urls belong to different user!");
     res.status(403).render('urls_errors', {user: user, errorMessage});
   }
 });
@@ -157,7 +156,6 @@ app.post("/urls/:id", (req, res) => {
     urlDatabase[req.params.id].longURL = longURL;
     res.redirect("/urls");
   } else {
-    // res.status(403).send("Status Code 403: Urls belong to different user!");
     const errorMessage = "Cannot edit URLs they belong to a different user!"
     res.status(403).render('urls_errors', {user: user, errorMessage});
   }
@@ -213,10 +211,14 @@ app.post("/login", (req, res) => {
       res.cookie("user_id", userID);
       res.redirect("/urls");
     } else {
-      res.status(403).send("Status Code 403: Password doesn't match!");
+      const errorMessage = "Password doesn't match!"
+      res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
+      // res.status(403).send("Status Code 403: Password doesn't match!");
     }
   } else {
-    res.status(403).send("Status Code 403: Email doesn't exist!");
+    const errorMessage = "Email doesn't exist!"
+      res.status(403).render('urls_errors', {user: users[req.cookies.user_id], errorMessage});
+    // res.status(403).send("Status Code 403: Email doesn't exist!");
   }
   
 });
