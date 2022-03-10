@@ -12,13 +12,13 @@
     <div class="card-header"></div>
     <div class="card-body">
       <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-      <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
+      <p class="card-text">Short URL: <a href="/u/<%= shortURL %>" target="_blank"><%= shortURL %></a></p>
     </div>
   <div class="card-footer text-muted">
     <h4>Edit</h4>
     <form class="form-inline justify-content-center"  action="/urls/<%= shortURL %>" method=POST>
       <label for="longURL">New URL:</label>
-      <input class="form-control" type="text" name="longURL" placeholder="https://www.nfl.com" style="margin: 1em">
+      <input class="form-control" type="text" name="longURL" placeholder="www.nfl.com" style="margin: 1em">
       <button type="submit" class="btn btn-primary">Submit</button>
     </form>
   </div>
