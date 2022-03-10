@@ -61,8 +61,9 @@ app.get("/", (req, res) => {
 
 // main url page
 app.get("/urls", (req, res) => {
+  //generates each page for each specific user
   const user = users[req.session.user_id];
-  const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user: user };
+  const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user };
   res.render("urls_index", templateVars);
 });
 
@@ -104,9 +105,10 @@ app.get("/login", (req, res) => {
 
 //POST
 
-//creates a new http address
+//creates a random shortURL and adds to database and redirects to urls/shorturl where you can click the link
 app.post("/urls", (req, res) => {
   const user = users[req.session.user_id];
+  // if user exist you can create a new url else error message
   if (user) {
     const longURL = req.body.longURL;
     const userID = req.session.user_id;
@@ -122,8 +124,14 @@ app.post("/urls", (req, res) => {
 
 // uses button to delete existing url
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const user = users[req.session.user_id];
+  // can only delete if you are logged in or the user who owns the url
+  const user = users[req.session.user_id];d
   
+  if (!user) {
+    const errorMessage = "Login first to delete urls!";
+    res.status(403).render('urls_errors', {user: user, errorMessage});
+  }
+
   if (urlDatabase[req.params.shortURL].userID === req.session.user_id) {
     delete urlDatabase[req.params.shortURL];
     res.redirect("/urls");
@@ -135,7 +143,14 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 //to edit shortURLs
 app.post("/urls/:id", (req, res) => {
+  // can only edit if you are logged in or the user who owns the url
   const user = users[req.session.user_id];
+  
+  if (!user) {
+    const errorMessage = "Login first to edit urls!";
+    res.status(403).render('urls_errors', {user: user, errorMessage});
+  }  
+  
   if (urlDatabase[req.params.id].userID === req.session.user_id) {
     const longURL = req.body.longURL;
     urlDatabase[req.params.id].longURL = longURL;
@@ -148,10 +163,12 @@ app.post("/urls/:id", (req, res) => {
 
 // generate a user
 app.post("/register", (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
+  // trim removes any white space at start or end of string
+  const email = req.body.email.trim();
+  const password = req.body.password.trim();
   const user = getUserByEmail(email, users);
 
+  // if email or password are empty
   if (!email || !password) {
     const errorMessage = "Please add a email and password!";
     res.status(403).render('urls_errors', {user: users[req.session.user_id], errorMessage});
@@ -178,12 +195,13 @@ app.post("/register", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email.trim();
   const password =  req.body.password.trim();
-
+  
+  //if no email of password enter if fields are empty
   if (!email || !password) {
     const errorMessage = "Invalid Credentials! Missing email or password! Try to Register!";
     res.status(403).render('urls_errors', {user: users[req.session.user_id], errorMessage});
   }
-
+  // find existing user
   const user = getUserByEmail(email, users);
 
   if (!user) {
@@ -192,6 +210,7 @@ app.post("/login", (req, res) => {
   }
   
   if (user && bcrypt.compareSync(password, user.password)) {
+    // gets existing cookie and redirects to main page
     req.session.user_id = user.id;
     res.redirect("/urls");
   } else {
