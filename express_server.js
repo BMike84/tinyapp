@@ -45,37 +45,48 @@ const users = {
   },
 };
 
-// function to make unique short url
-const generateRandomString = () => {
-  const numsLetters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += numsLetters.charAt(Math.floor(Math.random() * numsLetters.length));
-  }
-  return result;
-};
+const { generateRandomString, getUserByEmail, urlsForUser } = require('./helpers');
+
+// // function to make unique short url
+// const generateRandomString = () => {
+//   const numsLetters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+//   let result = '';
+//   for (let i = 0; i < 6; i++) {
+//     result += numsLetters.charAt(Math.floor(Math.random() * numsLetters.length));
+//   }
+//   return result;
+// };
 
 //test function after lecture
-const findUserByemail = (email) => {
-  for (const userID in users) {
-    const user = users[userID];
-    if (user.email === email) {
-      return user;
-    }
-  }
-  return null;
-}
+// const findUserByemail = (email) => {
+//   for (const userID in users) {
+//     const user = users[userID];
+//     if (user.email === email) {
+//       return user;
+//     }
+//   }
+//   return null;
+// }
 
-// Returns an object of short URLs specific to the passed in userID
-const urlsForUser = function(id, urlDatabase) {
-  const userUrls = {};
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      userUrls[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return userUrls;
-};
+// const getUserByEmail = (email, database) => {
+//   for (const user in database) {
+//     if (database[user].email === email) {
+//       return database[user];
+//     }
+//   }
+//   return null;
+// };
+
+// // Returns an object of short URLs specific to the passed in userID
+// const urlsForUser = function(id, urlDatabase) {
+//   const userUrls = {};
+//   for (const shortURL in urlDatabase) {
+//     if (urlDatabase[shortURL].userID === id) {
+//       userUrls[shortURL] = urlDatabase[shortURL];
+//     }
+//   }
+//   return userUrls;
+// };
 
 
 app.get("/", (req, res) => {
@@ -173,7 +184,7 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = findUserByemail(email);
+  const user = getUserByEmail(email, users);
 
   if (!email || !password) {
     const errorMessage = "Please add a email and password!"
@@ -215,7 +226,7 @@ app.post("/login", (req, res) => {
     res.status(403).render('urls_errors', {user: users[req.session.user_id], errorMessage});
   }
 
-  const user = findUserByemail(email);
+  const user = getUserByEmail(email, users);
 
   if (!user) {
   const errorMessage = "Invalid credentials! User does not exist";
