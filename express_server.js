@@ -10,7 +10,6 @@ app.use(bodyParser.urlencoded({extended: true}));
 const cookieSession = require("cookie-session");
 app.use(cookieSession({
   name: 'session',
-  // change keys not sure yet
   keys: ['MICHAEL'],
 }));
 
@@ -20,9 +19,13 @@ const bcrypt = require("bcryptjs");
 // use ejs
 app.set("view engine", "ejs");
 
+// to run port
 const PORT = 8080;
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
 
-// variables
+// variables for hardcoded existing urls and users
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -41,15 +44,19 @@ const users = {
   },
 };
 
+// importing helper functions from helpers.js
 const { generateRandomString, getUserByEmail, urlsForUser } = require('./helpers');
 
-app.get("/", (req, res) => {
-  res.redirect("/urls");
-});
+//GET 
 
 // turn url to json format
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
+});
+
+// redirects to /urls main page
+app.get("/", (req, res) => {
+  res.redirect("/urls");
 });
 
 // main url page
@@ -57,22 +64,6 @@ app.get("/urls", (req, res) => {
   const user = users[req.session.user_id];
   const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user: user };
   res.render("urls_index", templateVars);
-});
-
-//creates a new http address
-app.post("/urls", (req, res) => {
-  const user = users[req.session.user_id];
-  if (user) {
-    const longURL = req.body.longURL;
-    const userID = req.session.user_id;
-    const shortURL = generateRandomString();
-    urlDatabase[shortURL] = { longURL, userID };
-    res.redirect(`/urls/${shortURL}`);
-  } else {
-    const errorMessage = "You must be logged in to do that!"
-    res.status(403).render('urls_errors', {user: user, errorMessage}); 
-  }
-  
 });
 
 //edit and show tinyurl
@@ -98,7 +89,36 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user };
   res.render("urls_show", templateVars);
 });
+
+//create register page
+app.get("/register", (req, res) => {
+  const templateVars = { user: users[req.session.user_id] };
+  res.render('urls_registration', templateVars);
+});
+
+//creates login page
+app.get("/login", (req, res) => {
+  const templateVars = { user: users[req.session.user_id] };
+  res.render('urls_login', templateVars);
+});
+
+//POST
+
+//creates a new http address
+app.post("/urls", (req, res) => {
+  const user = users[req.session.user_id];
+  if (user) {
+    const longURL = req.body.longURL;
+    const userID = req.session.user_id;
+    const shortURL = generateRandomString();
+    urlDatabase[shortURL] = { longURL, userID };
+    res.redirect(`/urls/${shortURL}`);
+  } else {
+    const errorMessage = "You must be logged in to do that!";
+    res.status(403).render('urls_errors', {user: user, errorMessage});
+  }
   
+});
 
 // uses button to delete existing url
 app.post("/urls/:shortURL/delete", (req, res) => {
@@ -108,11 +128,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     delete urlDatabase[req.params.shortURL];
     res.redirect("/urls");
   } else {
-    const errorMessage = "Cannot delete URLs they belong to a different user!"
+    const errorMessage = "Cannot delete URLs they belong to a different user!";
     res.status(403).render('urls_errors', {user: user, errorMessage});
   }
 });
 
+//to edit shortURLs
 app.post("/urls/:id", (req, res) => {
   const user = users[req.session.user_id];
   if (urlDatabase[req.params.id].userID === req.session.user_id) {
@@ -120,15 +141,9 @@ app.post("/urls/:id", (req, res) => {
     urlDatabase[req.params.id].longURL = longURL;
     res.redirect("/urls");
   } else {
-    const errorMessage = "Cannot edit URLs they belong to a different user!"
+    const errorMessage = "Cannot edit URLs they belong to a different user!";
     res.status(403).render('urls_errors', {user: user, errorMessage});
   }
-});
-
-//create register page
-app.get("/register", (req, res) => {
-  const templateVars = { user: users[req.session.user_id] };
-  res.render('urls_registration', templateVars);
 });
 
 // generate a user
@@ -138,7 +153,7 @@ app.post("/register", (req, res) => {
   const user = getUserByEmail(email, users);
 
   if (!email || !password) {
-    const errorMessage = "Please add a email and password!"
+    const errorMessage = "Please add a email and password!";
     res.status(403).render('urls_errors', {user: users[req.session.user_id], errorMessage});
   }
   
@@ -154,15 +169,9 @@ app.post("/register", (req, res) => {
     req.session.user_id = user_id;
     res.redirect("/urls");
   } else {
-    const errorMessage = "Account Exist! Please Login instead"
+    const errorMessage = "Account Exist! Please Login instead";
     res.status(403).render('urls_errors', {user: users[req.session.user_id], errorMessage});
   }
-});
-
-//creates login page
-app.get("/login", (req, res) => {
-  const templateVars = { user: users[req.session.user_id] };
-  res.render('urls_login', templateVars);
 });
 
 // logins to page
@@ -171,33 +180,28 @@ app.post("/login", (req, res) => {
   const password =  req.body.password.trim();
 
   if (!email || !password) {
-    const errorMessage = "Invalid Credentials! Missing email or password! Try to Register!"
+    const errorMessage = "Invalid Credentials! Missing email or password! Try to Register!";
     res.status(403).render('urls_errors', {user: users[req.session.user_id], errorMessage});
   }
 
   const user = getUserByEmail(email, users);
 
   if (!user) {
-  const errorMessage = "Invalid credentials! User does not exist";
-  res.status(403).render('urls_errors', {user: users[req.session.user_id], errorMessage});
+    const errorMessage = "Invalid credentials! User does not exist";
+    res.status(403).render('urls_errors', {user: users[req.session.user_id], errorMessage});
   }
   
   if (user && bcrypt.compareSync(password, user.password)) {
-      req.session.user_id = user.id;
-      res.redirect("/urls");
+    req.session.user_id = user.id;
+    res.redirect("/urls");
   } else {
     const errorMessage = "Invalid credentials! Invalid password";
     res.status(403).render('urls_errors', {user: users[req.session.user_id], errorMessage});
-  } 
+  }
 });
 
 // lets you log out and deletes existing cookies
 app.post("/logout", (req,res) => {
   req.session = null;
   res.redirect("/urls");
-});
-
-// to run port
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
 });
