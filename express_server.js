@@ -6,10 +6,6 @@ const app = express();
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
-// // use cookie-parser
-// const cookieParser = require("cookie-parser");
-// app.use(cookieParser());
-
 // user cookie-session
 const cookieSession = require("cookie-session");
 app.use(cookieSession({
@@ -47,48 +43,6 @@ const users = {
 
 const { generateRandomString, getUserByEmail, urlsForUser } = require('./helpers');
 
-// // function to make unique short url
-// const generateRandomString = () => {
-//   const numsLetters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-//   let result = '';
-//   for (let i = 0; i < 6; i++) {
-//     result += numsLetters.charAt(Math.floor(Math.random() * numsLetters.length));
-//   }
-//   return result;
-// };
-
-//test function after lecture
-// const findUserByemail = (email) => {
-//   for (const userID in users) {
-//     const user = users[userID];
-//     if (user.email === email) {
-//       return user;
-//     }
-//   }
-//   return null;
-// }
-
-// const getUserByEmail = (email, database) => {
-//   for (const user in database) {
-//     if (database[user].email === email) {
-//       return database[user];
-//     }
-//   }
-//   return null;
-// };
-
-// // Returns an object of short URLs specific to the passed in userID
-// const urlsForUser = function(id, urlDatabase) {
-//   const userUrls = {};
-//   for (const shortURL in urlDatabase) {
-//     if (urlDatabase[shortURL].userID === id) {
-//       userUrls[shortURL] = urlDatabase[shortURL];
-//     }
-//   }
-//   return userUrls;
-// };
-
-
 app.get("/", (req, res) => {
   res.redirect("/urls");
 });
@@ -101,12 +55,9 @@ app.get("/urls.json", (req, res) => {
 // main url page
 app.get("/urls", (req, res) => {
   const user = users[req.session.user_id];
-  // test for users to see everything and see if items can delete or edit without permission
-  //  const templateVars = { urls: urlDatabase, user: user };
   const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user: user };
   res.render("urls_index", templateVars);
 });
-
 
 //creates a new http address
 app.post("/urls", (req, res) => {
@@ -197,7 +148,6 @@ app.post("/register", (req, res) => {
     users[user_id] = {
       id: user_id,
       email: req.body.email,
-      // password: req.body.password
       password: bcrypt.hashSync(password, 10)
     };
     //generate a cookie for the user
@@ -215,7 +165,6 @@ app.get("/login", (req, res) => {
   res.render('urls_login', templateVars);
 });
 
-//i can see my password in the console when i type it here but in the users its not present
 // logins to page
 app.post("/login", (req, res) => {
   const email = req.body.email.trim();
@@ -232,7 +181,7 @@ app.post("/login", (req, res) => {
   const errorMessage = "Invalid credentials! User does not exist";
   res.status(403).render('urls_errors', {user: users[req.session.user_id], errorMessage});
   }
-  // if (user.password !== password) {
+  
   if (user && bcrypt.compareSync(password, user.password)) {
       req.session.user_id = user.id;
       res.redirect("/urls");
