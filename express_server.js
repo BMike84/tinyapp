@@ -47,7 +47,7 @@ const users = {
 // importing helper functions from helpers.js
 const { generateRandomString, getUserByEmail, urlsForUser } = require("./helpers");
 
-//GET 
+//GET
 
 // turn url to json format
 app.get("/urls.json", (req, res) => {
@@ -84,10 +84,14 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
-// generates the new url added
+// go to edit page after creating a new url or clicking edit button
 app.get("/urls/:shortURL", (req, res) => {
   const user = users[req.session.user_id];
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user };
+  if (!user) {
+    const errorMessage = "You must be logged in to edit!";
+    res.status(403).render("urls_errors", { user, errorMessage });
+  }
   res.render("urls_show", templateVars);
 });
 
@@ -120,7 +124,6 @@ app.post("/urls", (req, res) => {
     const errorMessage = "You must be logged in to do that!";
     res.status(403).render("urls_errors", {user: user, errorMessage});
   }
-  
 });
 
 // uses button to delete existing url
@@ -150,7 +153,7 @@ app.post("/urls/:id", (req, res) => {
   if (!user) {
     const errorMessage = "Login first to edit urls!";
     res.status(403).render("urls_errors", {user: user, errorMessage});
-  }  
+  }
   
   if (urlDatabase[req.params.id].userID === req.session.user_id) {
     const longURL = "https://" + req.body.longURL;
@@ -197,7 +200,6 @@ app.post("/login", (req, res) => {
   // lets you use www. or not use www. when logging in and trims white space at start or end
   const email = req.body.email.replace("www.", "").trim();
   const password =  req.body.password.trim();
-  
   //if no email of password enter if fields are empty
   if (!email || !password) {
     const errorMessage = "Invalid Credentials! Missing email or password! Try to Register!";
