@@ -87,12 +87,31 @@ app.get("/urls/new", (req, res) => {
 // go to edit page after creating a new url or clicking edit button
 app.get("/urls/:shortURL", (req, res) => {
   const user = users[req.session.userId];
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user };
+  const shortURL = req.params.shortURL;
+  const longURL = req.body.longURL
+  const templateVars = { shortURL, longURL, user };
+
+  // if not user exist
   if (!user) {
-    const errorMessage = "You must be logged in to edit!";
+    const errorMessage = "You are not logged in!";
     res.status(403).render("urls_errors", { user, errorMessage });
   }
-  res.render("urls_show", templateVars);
+
+  //if user exist but shortUrl doesn't exist
+  if (user && !urlDatabase[shortURL]) {
+    const errorMessage = "Url doesn't exist!";
+    res.status(403).render("urls_errors", { user, errorMessage });
+  }
+
+  // if the user id does not match the urls user id
+  if (user && urlDatabase[shortURL].userID !== user.id) {
+    const errorMessage = "You are not authorized to edit others Urls!";
+    res.status(403).render("urls_errors", { user, errorMessage });
+  }
+
+  // if all works render edit page
+  res.render("urls_show", templateVars)
+  
 });
 
 //create register page
