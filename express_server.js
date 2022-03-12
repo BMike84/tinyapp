@@ -26,23 +26,8 @@ app.listen(PORT, () => {
 });
 
 // variables for hardcoded existing urls and users
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW"
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW"
-  },
-};
-const users = {
-  "aJ48lW": {
-    id: "aJ48lW",
-    email: "b@b.com",
-    password: bcrypt.hashSync("mike", 10)
-  },
-};
+const urlDatabase = {};
+const users = {};
 
 // importing helper functions from helpers.js
 const { generateRandomString, getUserByEmail, urlsForUser } = require("./helpers");
