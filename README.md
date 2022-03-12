@@ -30,4 +30,3 @@ Page when logged in
 - Install all dependencies (using the `npm install` command).
 - Run the development web server using the `node express_server.js` command.
 - Register as a new user to start
-- You can log in with one existing user hardcoded with email: b@b.com password: mike.
